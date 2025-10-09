@@ -33,3 +33,9 @@ def remove_dados_duplicados(dataframe):
     dataframe_limpo = dataframe.drop_duplicates()
     print(f'Dados duplicados removidos com sucesso! \nDimensão: {dataframe_limpo.shape}')
     return dataframe_limpo
+
+
+def exporta_csv(dataframe, nome_arquivo, separador=";", encoding="utf-8", index=False):
+    print(f'Exportando o dataframe para o arquivo: {nome_arquivo} ...')
+    dataframe.to_csv(nome_arquivo, sep=separador, encoding=encoding, index=index)
+    print('Dataframe exportado com sucesso!')
