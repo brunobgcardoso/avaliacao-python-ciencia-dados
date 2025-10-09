@@ -6,7 +6,6 @@ def analisa_dados_ausentes(dataframe):
     ausentes = dados_ausentes.reset_index(name="Quantidade")
     ausentes.rename(columns={"index": "variavel_analisada"}, inplace=True)
     ausentes['Percentual'] = (((ausentes['Quantidade'] / total)*100).round(2)).apply(lambda x: f'{x:.1f}%')
-    
     filtro = ausentes['Quantidade'] > 0
     return ausentes[filtro]
 
@@ -18,6 +17,7 @@ def verifica_dados_duplicados(dataframe):
     return dataframe[filtro].head(5)
 
 def importa_csv(dataframe_name, separador=";", encoding="utf-8"):
+    print(f'Importando o dataframe: {dataframe_name} ...')
     dataframe = pd.read_csv(dataframe_name, sep=separador, encoding=encoding)
     print(f'Dataframe importado com sucesso! \nDimensão: {dataframe.shape}')
     return dataframe
@@ -26,3 +26,10 @@ def junta_dataframes(df1, df2, chave, tipo_juncao='inner'):
     df_final = pd.merge(df1, df2, on=chave, how=tipo_juncao)
     print(f'Dataframes unidos com sucesso! \nDimensão: {df_final.shape}')
     return df_final
+
+def remove_dados_duplicados(dataframe):
+    print('Removendo dados duplicados ...')
+    verifica_dados_duplicados(dataframe)
+    dataframe_limpo = dataframe.drop_duplicates()
+    print(f'Dados duplicados removidos com sucesso! \nDimensão: {dataframe_limpo.shape}')
+    return dataframe_limpo
