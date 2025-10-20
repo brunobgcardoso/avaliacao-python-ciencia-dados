@@ -1,3 +1,14 @@
+Gapeminder:
+1. GDP Per Data (Price and inflation adjusted)
+2. Extreme poverty rate (less then $2.15 ...)
+3. Child mortality (per 1000 live births)
+4. Human Development Index (HDI)
+5. Population Density (per square km)
+
+
+
+
+-------------------------------
 O Gapminder é uma base de dados pública sobre desenvolvimento global, saúde, educação, renda, energia e outros indicadores socioeconômicos.  
 Se você quer integrar o Gapminder com outras bases, depende do seu objetivo (por exemplo, ampliar indicadores, cruzar dados regionais, atualizar informações, etc.).
 
