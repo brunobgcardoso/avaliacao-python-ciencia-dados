@@ -1,4 +1,4 @@
-country;year;pop;continent;lifeExp;gdpPercap;one-sided violence;non-state conflict;extrasystemic;intrastate;interstate;gdp_per_capta_inf_adjusted
+country;year;pop;continent;lifeExp;gdpPercap;oneSidedViolence;nonStateConflict;extrasystemic;intrastate;interstate;gdpPerCaptaInflactionAdjusted
 Afghanistan;1952;8.425.333;Asia;28.8;779.45;;;;;;1540.11
 Afghanistan;1957;9.240.934;Asia;30.3;820.85;;;;;;1708.81
 Afghanistan;1962;10.267.083;Asia;32.0;853.1;;;;;;1869.5

@@ -1,5 +1,5 @@
 Gapeminder:
-1. GDP Per Data (Price and inflation adjusted) - BAIXADO
+1. GDP Per Data (Price and inflation adjusted) - BAIXADO - FEITO
 2. Extreme poverty rate (less then $2.15 ...) - BAIXADO
 3. Child mortality (per 1000 live births) - BAIXADO
 4. Human Development Index (HDI) - BAIXADO
