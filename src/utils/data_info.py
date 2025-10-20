@@ -1,4 +1,6 @@
 import pandas as pd
+from typing import List, Optional, Dict
+import re
 
 def analisa_dados_ausentes(dataframe):    
     dados_ausentes = dataframe.isna().sum()
@@ -92,8 +94,6 @@ def agrega_anos(df, anos, colunas_agregacao, coluna_agrupamento=['country'], jan
     return result
 
 
-import pandas as pd
-
 def rename_one_column(df: pd.DataFrame, old_name: str, new_name: str, inplace: bool = False,
                       errors: str = 'raise', prevent_overwrite: bool = True) -> pd.DataFrame:
     """
@@ -141,3 +141,89 @@ def rename_one_column(df: pd.DataFrame, old_name: str, new_name: str, inplace: b
         return df
     else:
         return df.rename(columns={old_name: new_name})
+
+def wide_to_long_years(
+    df: pd.DataFrame,
+    id_vars: List[str],
+    year_cols: Optional[List[str]] = None,
+    year_regex: str = r"(\d{4})",
+    value_name: str = "value",
+    var_name: str = "year",
+    dropna: bool = True,
+    convert_year_to_int: bool = True,
+) -> pd.DataFrame:
+    """
+    Converte um DataFrame wide (uma coluna por ano) para long (uma linha por país+ano).
+    - df: DataFrame de entrada.
+    - id_vars: colunas que identificam a entidade, ex: ['country'].
+    - year_cols: lista explícita de colunas que representam anos (opcional).
+    - year_regex: regex para extrair o ano do nome da coluna (default captura 4 dígitos).
+      Se as colunas forem exatamente '1952','1957',... a detecção automática também funciona.
+    - value_name: nome da coluna de valor no DataFrame resultante.
+    - var_name: nome temporário gerado pelo melt (por padrão 'year', depois convertida).
+    - dropna: se True, elimina linhas cujo valor seja NaN.
+    - convert_year_to_int: se True, converte o ano para int quando puder.
+
+    Retorna um DataFrame com columns = id_vars + ['year', value_name].
+    """
+
+    # validações
+    if not set(id_vars).issubset(df.columns):
+        missing = list(set(id_vars) - set(df.columns))
+        raise ValueError(f"As colunas id_vars faltantes no df: {missing}")
+
+    # detectar colunas ano quando não fornecidas
+    if year_cols is None:
+        # 1) colunas que são exatamente 4 dígitos (ex: '1952')
+        candidate_years = [c for c in df.columns if re.fullmatch(r"\d{4}", str(c))]
+        if candidate_years:
+            year_cols = candidate_years
+        else:
+            # 2) colunas que contenham 4 dígitos em qualquer parte (ex: 'k_1952', 'Deaths 1952')
+            year_cols = [c for c in df.columns if re.search(year_regex, str(c))]
+
+    if not year_cols:
+        raise ValueError("Nenhuma coluna de ano identificada. Passe `year_cols` explicitamente ou ajuste `year_regex`.")
+
+    # mapear coluna -> ano (string)
+    col_to_year: Dict[str, str] = {}
+    for col in year_cols:
+        m = re.search(year_regex, str(col))
+        if m:
+            year_str = m.group(1)
+        else:
+            # se não extrair com regex, e o nome for exatamente um número, usa ele
+            if re.fullmatch(r"\d{4}", str(col)):
+                year_str = str(col)
+            else:
+                # fallback para nome literal da coluna (pouco provável)
+                year_str = str(col)
+        col_to_year[col] = year_str
+
+    # melt
+    melted = df.melt(id_vars=id_vars, value_vars=list(col_to_year.keys()),
+                     var_name=var_name, value_name=value_name)
+
+    # transformar a coluna do var_name para o ano extraído
+    # aplicamos o mapping criado
+    melted[var_name] = melted[var_name].map(col_to_year)
+
+    # converter tipo do ano
+    if convert_year_to_int:
+        def to_int_safe(x):
+            try:
+                return int(x)
+            except Exception:
+                return x
+        melted[var_name] = melted[var_name].apply(to_int_safe)
+
+    # opcionalmente remover NaNs
+    if dropna:
+        melted = melted.dropna(subset=[value_name])
+
+    # ordenar e reorganizar colunas
+    out_cols = list(id_vars) + [var_name, value_name]
+    melted = melted[out_cols]
+    melted = melted.sort_values(list(id_vars) + [var_name]).reset_index(drop=True)
+
+    return melted
