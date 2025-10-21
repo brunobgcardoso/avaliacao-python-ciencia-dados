@@ -227,3 +227,13 @@ def wide_to_long_years(
     melted = melted.sort_values(list(id_vars) + [var_name]).reset_index(drop=True)
 
     return melted
+
+
+def transpoe_e_trata_dataframe(df, nome_coluna_resultado='resultado'):
+    tratado = df.copy()
+    tratado = wide_to_long_years(tratado, id_vars=['name'])
+    tratado['value'] = tratado['value'].round(2)
+    remove_dados_duplicados(tratado)
+    rename_one_column(tratado, old_name='name', new_name='country', inplace=True)
+    rename_one_column(tratado, old_name='value', new_name=nome_coluna_resultado, inplace=True)
+    return tratado

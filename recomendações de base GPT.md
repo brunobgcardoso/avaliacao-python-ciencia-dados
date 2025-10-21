@@ -1,9 +1,9 @@
 Gapeminder:
 1. GDP Per Data (Price and inflation adjusted) - BAIXADO - FEITO
-2. Extreme poverty rate (less then $2.15 ...) - BAIXADO
-3. Child mortality (per 1000 live births) - BAIXADO
-4. Human Development Index (HDI) - BAIXADO
-5. Population Density (per square km) - BAIXADO
+2. Extreme poverty rate (less then $2.15 ...) - BAIXADO - FEITO
+3. Child mortality (per 1000 live births) - BAIXADO - FEITO
+4. Human Development Index (HDI) - BAIXADO - FEITO
+5. Population Density (per square km) - BAIXADO - FEITO
 6. Galera que morreu em conflito - BAIXADO - FEITO
 
 
