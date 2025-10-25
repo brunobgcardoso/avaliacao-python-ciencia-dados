@@ -209,3 +209,20 @@ def transpoe_e_trata_dataframe(df, nome_coluna_resultado='resultado'):
     renomeia_coluna(tratado, nome_anterior='name', novo_nome='country', inplace=True)
     renomeia_coluna(tratado, nome_anterior='value', novo_nome=nome_coluna_resultado, inplace=True)
     return tratado
+
+
+def corrige_paises_estranhos(dataset):
+    map = {
+            'Congo, Dem. Rep.': 'Congo Dem. Rep.',
+            'Congo, Rep.': 'Congo Rep.',
+            'South Korea': 'Korea Dem. Rep.',
+            'North Korea': 'Korea Rep.',
+            'Eswatini': 'Swaziland',
+            'UK': 'United Kingdom',
+            'USA': 'United States',
+            'Palestine': 'West Bank and Gaza',
+            'Yemen': 'Yemen Rep.'
+        }
+    df_corrigido = dataset.copy()
+    df_corrigido['country'] = df_corrigido['country'].replace(map)
+    return df_corrigido
