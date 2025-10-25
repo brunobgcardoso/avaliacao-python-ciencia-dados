@@ -2,50 +2,20 @@ import pandas as pd
 from typing import List, Optional, Dict
 import re
 
-def analisa_dados_ausentes(dataframe):    
-    dados_ausentes = dataframe.isna().sum()
-    total = dataframe.shape[0]
-    ausentes = dados_ausentes.reset_index(name="Quantidade")
-    ausentes.rename(columns={"index": "variavel_analisada"}, inplace=True)
-    ausentes['Percentual'] = (((ausentes['Quantidade'] / total)*100).round(2)).apply(lambda x: f'{x:.1f}%')
-    filtro = ausentes['Quantidade'] > 0
-    return ausentes[filtro]
+import sys
+sys.path.append('../avaliacao-python-ciencia-dados/')
 
-def verifica_dados_duplicados(dataframe):
-    qtd = dataframe.duplicated().sum()
-    print(f'Foram encontrados {qtd} registros duplicados\n')
-    print('Prévia dos dados duplicados:')
-    filtro = dataframe.duplicated()
-    return dataframe[filtro].head(5)
+from utils.data_analisys import *
 
-def importa_csv(dataframe_name, separador=";", encoding="utf-8"):
-    print(f'Importando o dataframe: {dataframe_name} ...')
-    dataframe = pd.read_csv(dataframe_name, sep=separador, encoding=encoding)
-    print(f'Dataframe importado com sucesso! \nDimensão: {dataframe.shape}')
-    return dataframe
 
 def junta_dataframes(df1, df2, chave, tipo_juncao='inner'):
     df_final = pd.merge(df1, df2, on=chave, how=tipo_juncao)
     print(f'Dataframes unidos com sucesso! \nDimensão: {df_final.shape}')
     return df_final
 
-def remove_dados_duplicados(dataframe):
-    print('Removendo dados duplicados ...')
-    verifica_dados_duplicados(dataframe)
-    dataframe_limpo = dataframe.drop_duplicates()
-    print(f'Dados duplicados removidos com sucesso! \nDimensão: {dataframe_limpo.shape}')
-    return dataframe_limpo
-
-
-def exporta_csv(dataframe, nome_arquivo, separador=";", encoding="utf-8", index=False):
-    print(f'Exportando o dataframe para o arquivo: {nome_arquivo} ...')
-    dataframe.to_csv(nome_arquivo, sep=separador, encoding=encoding, index=index)
-    print('Dataframe exportado com sucesso!')
-
-
-
 def agrega_anos(df, anos, colunas_agregacao, coluna_agrupamento=['country'], janela_agrupamento=5, primeiro_ano_sozinho=True):
     """
+    Feita usando IA como apoio.
     Agrega várias colunas em janelas que terminam em cada ano de `anos`.
     - df: DataFrame contendo pelo menos colunas coluna_agrupamento e 'year' (int).
     - anos: lista de anos-alvo (ex: [1952, 1957, ...]).
@@ -94,26 +64,27 @@ def agrega_anos(df, anos, colunas_agregacao, coluna_agrupamento=['country'], jan
     return result
 
 
-def rename_one_column(df: pd.DataFrame, old_name: str, new_name: str, inplace: bool = False,
-                      errors: str = 'raise', prevent_overwrite: bool = True) -> pd.DataFrame:
+def renomeia_coluna(df: pd.DataFrame, nome_anterior: str, novo_nome: str, inplace: bool = False,
+                      errors: str = 'raise', previnir_sobrescrita: bool = True) -> pd.DataFrame:
     """
+    Feita usando IA como apoio.
     Renomeia uma única coluna em um DataFrame pandas.
 
     Parâmetros
     ----------
     df : pd.DataFrame
         DataFrame de entrada.
-    old_name : str
+    nome_anterior : str
         Nome atual da coluna a ser renomeada.
-    new_name : str
+    novo_nome : str
         Novo nome da coluna.
     inplace : bool, default False
         Se True, modifica o DataFrame em lugar e retorna o próprio df.
     errors : {'raise', 'ignore'}, default 'raise'
-        'raise' -> levanta ValueError se old_name não existir.
-        'ignore' -> retorna df inalterado se old_name não existir.
-    prevent_overwrite : bool, default True
-        Se True, levanta ValueError se new_name já existir no DataFrame (evita sobrescrita).
+        'raise' -> levanta ValueError se nome_anterior não existir.
+        'ignore' -> retorna df inalterado se nome_anterior não existir.
+    previnir_sobrescrita : bool, default True
+        Se True, levanta ValueError se novo_nome já existir no DataFrame (evita sobrescrita).
         Se False, permite renomear e possivelmente sobrescrever coluna existente.
 
     Retorno
@@ -123,72 +94,73 @@ def rename_one_column(df: pd.DataFrame, old_name: str, new_name: str, inplace: b
     """
     if not isinstance(df, pd.DataFrame):
         raise TypeError("`df` precisa ser um pandas.DataFrame")
-    if not isinstance(old_name, str) or not isinstance(new_name, str):
-        raise TypeError("`old_name` e `new_name` devem ser strings")
+    if not isinstance(nome_anterior, str) or not isinstance(novo_nome, str):
+        raise TypeError("`nome_anterior` e `novo_nome` devem ser strings")
 
-    if old_name not in df.columns:
+    if nome_anterior not in df.columns:
         if errors == 'raise':
-            raise ValueError(f"Coluna '{old_name}' não existe no DataFrame.")
+            raise ValueError(f"Coluna '{nome_anterior}' não existe no DataFrame.")
         else:
             # ignore: retorna sem alterações
             return df if inplace else df.copy()
 
-    if prevent_overwrite and new_name in df.columns and new_name != old_name:
-        raise ValueError(f"Novo nome '{new_name}' já existe no DataFrame (prevent_overwrite=True).")
+    if previnir_sobrescrita and novo_nome in df.columns and novo_nome != nome_anterior:
+        raise ValueError(f"Novo nome '{novo_nome}' já existe no DataFrame (previnir_sobrescrita=True).")
 
     if inplace:
-        df.rename(columns={old_name: new_name}, inplace=True)
+        df.rename(columns={nome_anterior: novo_nome}, inplace=True)
         return df
     else:
-        return df.rename(columns={old_name: new_name})
+        return df.rename(columns={nome_anterior: novo_nome})
 
-def wide_to_long_years(
+def transpoe_anos(
     df: pd.DataFrame,
-    id_vars: List[str],
-    year_cols: Optional[List[str]] = None,
-    year_regex: str = r"(\d{4})",
-    value_name: str = "value",
+    colunas_agregacao: List[str],
+    colunas_ano: Optional[List[str]] = None,
+    regex_ano: str = r"(\d{4})",
+    novo_nome_coluna: str = "value",
     var_name: str = "year",
     dropna: bool = True,
-    convert_year_to_int: bool = True,
+    converte_ano_para_inteiro: bool = True,
 ) -> pd.DataFrame:
     """
+    Feita usando IA como apoio.
     Converte um DataFrame wide (uma coluna por ano) para long (uma linha por país+ano).
     - df: DataFrame de entrada.
-    - id_vars: colunas que identificam a entidade, ex: ['country'].
-    - year_cols: lista explícita de colunas que representam anos (opcional).
-    - year_regex: regex para extrair o ano do nome da coluna (default captura 4 dígitos).
+    - colunas_agregacao: colunas que identificam a entidade, ex: ['country'].
+    - colunas_ano: lista explícita de colunas que representam anos (opcional).
+    - regex_ano: regex para extrair o ano do nome da coluna (default captura 4 dígitos).
       Se as colunas forem exatamente '1952','1957',... a detecção automática também funciona.
-    - value_name: nome da coluna de valor no DataFrame resultante.
+    - novo_nome_coluna: nome da coluna de valor no DataFrame resultante.
     - var_name: nome temporário gerado pelo melt (por padrão 'year', depois convertida).
     - dropna: se True, elimina linhas cujo valor seja NaN.
-    - convert_year_to_int: se True, converte o ano para int quando puder.
+    - converte_ano_para_inteiro: se True, converte o ano para int quando puder.
 
-    Retorna um DataFrame com columns = id_vars + ['year', value_name].
+    Retorna um DataFrame com columns = colunas_agregacao + ['year', novo_nome_coluna].
     """
 
     # validações
-    if not set(id_vars).issubset(df.columns):
-        missing = list(set(id_vars) - set(df.columns))
-        raise ValueError(f"As colunas id_vars faltantes no df: {missing}")
+    if not set(colunas_agregacao).issubset(df.columns):
+        missing = list(set(colunas_agregacao) - set(df.columns))
+        raise ValueError(f"As colunas colunas_agregacao faltantes no df: {missing}")
 
     # detectar colunas ano quando não fornecidas
-    if year_cols is None:
+    if colunas_ano is None:
         # 1) colunas que são exatamente 4 dígitos (ex: '1952')
         candidate_years = [c for c in df.columns if re.fullmatch(r"\d{4}", str(c))]
         if candidate_years:
-            year_cols = candidate_years
+            colunas_ano = candidate_years
         else:
             # 2) colunas que contenham 4 dígitos em qualquer parte (ex: 'k_1952', 'Deaths 1952')
-            year_cols = [c for c in df.columns if re.search(year_regex, str(c))]
+            colunas_ano = [c for c in df.columns if re.search(regex_ano, str(c))]
 
-    if not year_cols:
-        raise ValueError("Nenhuma coluna de ano identificada. Passe `year_cols` explicitamente ou ajuste `year_regex`.")
+    if not colunas_ano:
+        raise ValueError("Nenhuma coluna de ano identificada. Passe `colunas_ano` explicitamente ou ajuste `regex_ano`.")
 
     # mapear coluna -> ano (string)
     col_to_year: Dict[str, str] = {}
-    for col in year_cols:
-        m = re.search(year_regex, str(col))
+    for col in colunas_ano:
+        m = re.search(regex_ano, str(col))
         if m:
             year_str = m.group(1)
         else:
@@ -201,15 +173,15 @@ def wide_to_long_years(
         col_to_year[col] = year_str
 
     # melt
-    melted = df.melt(id_vars=id_vars, value_vars=list(col_to_year.keys()),
-                     var_name=var_name, value_name=value_name)
+    melted = df.melt(id_vars=colunas_agregacao, value_vars=list(col_to_year.keys()),
+                     var_name=var_name, value_name=novo_nome_coluna)
 
     # transformar a coluna do var_name para o ano extraído
     # aplicamos o mapping criado
     melted[var_name] = melted[var_name].map(col_to_year)
 
     # converter tipo do ano
-    if convert_year_to_int:
+    if converte_ano_para_inteiro:
         def to_int_safe(x):
             try:
                 return int(x)
@@ -219,21 +191,21 @@ def wide_to_long_years(
 
     # opcionalmente remover NaNs
     if dropna:
-        melted = melted.dropna(subset=[value_name])
+        melted = melted.dropna(subset=[novo_nome_coluna])
 
     # ordenar e reorganizar colunas
-    out_cols = list(id_vars) + [var_name, value_name]
+    out_cols = list(colunas_agregacao) + [var_name, novo_nome_coluna]
     melted = melted[out_cols]
-    melted = melted.sort_values(list(id_vars) + [var_name]).reset_index(drop=True)
+    melted = melted.sort_values(list(colunas_agregacao) + [var_name]).reset_index(drop=True)
 
     return melted
 
 
 def transpoe_e_trata_dataframe(df, nome_coluna_resultado='resultado'):
     tratado = df.copy()
-    tratado = wide_to_long_years(tratado, id_vars=['name'])
+    tratado = transpoe_anos(tratado, colunas_agregacao=['name'])
     tratado['value'] = tratado['value'].round(2)
     remove_dados_duplicados(tratado)
-    rename_one_column(tratado, old_name='name', new_name='country', inplace=True)
-    rename_one_column(tratado, old_name='value', new_name=nome_coluna_resultado, inplace=True)
+    renomeia_coluna(tratado, nome_anterior='name', novo_nome='country', inplace=True)
+    renomeia_coluna(tratado, nome_anterior='value', novo_nome=nome_coluna_resultado, inplace=True)
     return tratado
